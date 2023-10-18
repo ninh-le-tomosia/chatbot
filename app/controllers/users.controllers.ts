@@ -1,7 +1,12 @@
-import HandleUploadOperation from '../operations/users/handle-upload.operation'
+import HandleUploadOperation from '../operations/users/handle-upload.operation';
+import ChatOperation         from '../operations/users/chat.operation';
 
 class UsersController {
   chat(req: any, res: any): void {
+    const { field_chat: question } = req.body || req.params || req.query || {};
+    const operator = new ChatOperation(question);
+    operator.call();
+
     res.redirect('/');
   }
 
