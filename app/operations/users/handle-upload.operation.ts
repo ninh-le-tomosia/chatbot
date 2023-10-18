@@ -1,21 +1,24 @@
-import fs         from 'fs';
-import TextParser from '../../../lib/text-parser';
+import fs                   from 'fs';
+import TextParser           from '../../../lib/text-parser';
+import { embeddings }       from '../../../lib/openai';
+import { RedisVectorStore } from 'langchain/vectorstores/redis';
+import redisClient from '../../../utils/redis.client';
 
 class HandleUploadOperation {
   private _path: string;
   private _user: any;
   private _data: string;
-  private _contents: any;
+  private _docs: any;
 
   constructor(file: any, user: any) {
     this._path = file.path;
     this._user = user;
   }
 
-  call() {
-    this.stepReadFile();
-    this.stepParserFromFile();
-    this.stepTrainingData();
+  async call() {
+    await this.stepReadFile();
+    await this.stepParserFromFile();
+    await this.stepTrainingData();
   }
 
   private async stepReadFile() {
@@ -28,16 +31,24 @@ class HandleUploadOperation {
     }
   }
 
-  private stepParserFromFile() {
-    const doc = new TextParser(this._data);
-    this._contents = doc.splitter();
+  private async stepParserFromFile() {
+    const textParser = new TextParser();
+    this._docs = await textParser.generateFromText(this._data);
   }
 
-  private stepTrainingData() {
-    debugger
-    for (let content of this._contents) {
-      console.log(content);
-    }
+  private async stepTrainingData(): Promise<void> {
+    const docs = this._docs.map((doc: any) => {
+      return {
+        pageContent: doc.pageContent,
+        metadata: Object.assign(doc?.metadata?.loc, { company: 'TOMOSIA' }),
+      }
+    });
+
+    const vectorStore = await RedisVectorStore.fromDocuments(
+      docs, embeddings, { redisClient, indexName: "companies:tomosia", }
+    );
+
+    console.log(vectorStore);
   }
 }
 
