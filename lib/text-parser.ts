@@ -4,9 +4,8 @@ import { TextLoader } from "langchain/document_loaders/fs/text";
 class TextParser {
   async generateFromText(text: string) {
     const splitter = new CharacterTextSplitter({
-      separator: "\n",
-      chunkSize: 7,
-      chunkOverlap: 3,
+      chunkSize: 1000,
+      chunkOverlap: 200,
     });
 
     return await splitter.createDocuments([text]);
