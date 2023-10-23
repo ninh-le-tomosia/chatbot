@@ -19,18 +19,14 @@ class ChatOperation {
   async call() {
     this.stepBuildChatSystem();
     await this.stepBuildUserQuestion();
-    await this.stepChat();
+    return await this.stepChat();
   }
 
   private async stepBuildUserQuestion() {
     const vectorStore = new RedisVectorStore(embeddings, { redisClient, indexName: 'companies:tomosia' });
     const results = await vectorStore.similaritySearch(this.question, 1);
 
-    console.log('Results: ', results);
-
     const prompt: string = this.createPromptQuestion(results);
-
-    console.log('Prompt: ', prompt)
 
     this.messages.push({
       role: 'system',
@@ -41,26 +37,15 @@ class ChatOperation {
       role: 'user',
       content: this.question
     });
-
-    console.log(this.messages);
   }
 
   private async stepChat() {
-    console.log('Messages: ', this.messages);
-
-    const stream = await this.openai.chat.completions.create({
+    return await this.openai.chat.completions.create({
       model: 'gpt-3.5-turbo-16k-0613',
       messages: this.messages,
       temperature: 0.5,
       stream: true,
     });
-
-    let result: string = ""
-    for await (const part of stream) {
-      result += (part.choices[0]?.delta?.content || '');
-    }
-
-    console.log(result);
   }
 
   private createPromptQuestion(docs: any[]): string {

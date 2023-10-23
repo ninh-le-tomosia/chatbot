@@ -8,12 +8,18 @@ import cors       from 'cors';
 import helmet     from 'helmet';
 import bodyParser from 'body-parser';
 import express    from 'express';
+import { createServer } from 'http';
 import path       from 'path';
 import passport   from 'passport';
 import session    from 'express-session';
+import { Server } from 'socket.io';
+
+
 
 const app  = express();
 const port = process.env.PORT || 8080;
+const server = createServer(app);
+const io = new Server(server);
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -54,15 +60,13 @@ import './config/database.conf';
 // passport setup
 import './utils/passport';
 
+import { chatStream } from './app/controllers/chat.stream.controllers';
+chatStream(io);
+
 // routes
 import appRoutes from './config/routes.conf';
 app.use('/', appRoutes);
 
-app.post('/chat', (req, res) => {
-  console.log(req.body)
-  debugger
-})
-
-app.listen(port, () => {
+server.listen(port, () => {
   return console.log(`Express is listening at http://localhost:${port}`);
 });
